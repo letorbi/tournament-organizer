@@ -13,6 +13,10 @@ export interface StandingsValues {
      */
     gamePoints: number,
     /**
+     * Number of won games.
+     */
+    gameWins: number,
+    /**
      * Number of games played.
      */
     games: number,
@@ -20,6 +24,10 @@ export interface StandingsValues {
      * Number of points earned based on matches.
      */
     matchPoints: number,
+    /**
+     * Number of won matches.
+     */
+    matchWins: number,
     /**
      * Number of matches played.
      */
