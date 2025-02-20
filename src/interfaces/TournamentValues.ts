@@ -103,7 +103,7 @@ export interface TournamentValues {
         /**
          * Minimum value for a tiebreak.
          */
-        tiebreakFloors?: {
+        tiebreakFloors: {
             medianBuchholz?: number,
             solkoff?: number,
             sonnebornBerger?: number,
