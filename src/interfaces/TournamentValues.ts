@@ -87,6 +87,10 @@ export interface TournamentValues {
          */
         bye: number,
         /**
+         * Scoring mode being used.
+         */
+	score: 'game points' | 'game wins' | 'match points' | 'match wins',
+        /**
          * Array of tiebreakers being used.
          */
         tiebreaks: Array<
