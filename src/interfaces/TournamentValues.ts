@@ -103,7 +103,18 @@ export interface TournamentValues {
         /**
          * Minimum value for a tiebreak.
          */
-        tiebreakMin: number
+        tiebreakFloors?: {
+            medianBuchholz?: number,
+            solkoff?: number,
+            sonnebornBerger?: number,
+            cumulative?: number,
+            oppCumulative?: number,
+            matchWinPct?: number,
+            oppMatchWinPct?: number,
+            oppOppMatchWinPct?: number,
+            gameWinPct?: number,
+            oppGameWinPct?: number
+        } 
     },
     /**
      * Details about the first stage of the tournament.

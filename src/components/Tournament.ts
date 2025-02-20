@@ -69,7 +69,7 @@ export class Tournament {
             loss: 0,
             bye: 1,
             tiebreaks: [],
-	    tiebreakMin: 0
+            tiebreakFloors: null
         };
         this.stageOne = {
             format: 'single-elimination',
@@ -382,11 +382,13 @@ export class Tournament {
             }
             player.tiebreaks.oppOppMatchWinPct = opponents.reduce((sum, opp) => sum + opp.tiebreaks.oppMatchWinPct, 0) / opponents.length;
         }
-        if (this.scoring.tiebreakMin !== undefined) {
+        if (this.scoring.tiebreakFloors) {
             for (const player of playerScores) {
-                for (const j of Object.keys(player.tiebreaks)) {
-                    if (player.tiebreaks[j] < this.scoring.tiebreakMin)
-                        player.tiebreaks[j] = this.scoring.tiebreakMin;
+                for (const tiebreakName of Object.keys(player.tiebreaks)) {
+                    player.tiebreaks[tiebreakName] = Math.max(
+                        player.tiebreaks[tiebreakName],
+                        this.scoring.tiebreakFloors[tiebreakName] || 0
+                     );
                 }
             }
         }
