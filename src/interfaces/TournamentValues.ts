@@ -99,7 +99,11 @@ export interface TournamentValues {
             'opponent game win percentage' |
             'opponent match win percentage' |
             'opponent opponent match win percentage'
-        >
+        >,
+        /**
+         * Minimum value for a tiebreak.
+         */
+        tiebreakMin: number
     },
     /**
      * Details about the first stage of the tournament.
