@@ -99,7 +99,22 @@ export interface TournamentValues {
             'opponent game win percentage' |
             'opponent match win percentage' |
             'opponent opponent match win percentage'
-        >
+        >,
+        /**
+         * Minimum value for a tiebreak.
+         */
+        tiebreakFloors: {
+            medianBuchholz?: number,
+            solkoff?: number,
+            sonnebornBerger?: number,
+            cumulative?: number,
+            oppCumulative?: number,
+            matchWinPct?: number,
+            oppMatchWinPct?: number,
+            oppOppMatchWinPct?: number,
+            gameWinPct?: number,
+            oppGameWinPct?: number
+        } 
     },
     /**
      * Details about the first stage of the tournament.
