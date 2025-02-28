@@ -68,6 +68,7 @@ export class Tournament {
             draw: 0.5,
             loss: 0,
             bye: 1,
+            score: 'match points',
             tiebreaks: [],
             tiebreakFloors: {}
         };
@@ -312,8 +313,10 @@ export class Tournament {
         const playerScores = this.players.map(player => ({
             player: player,
             gamePoints: 0,
+            gameWins: 0,
             games: 0,
             matchPoints: 0,
+            matchWins: 0,
             matches: 0,
             tiebreaks: {
                 medianBuchholz: this.scoring.tiebreakFloors.medianBuchholz || 0,
@@ -341,8 +344,10 @@ export class Tournament {
             let cumulative = 0;
             player.player.matches.filter(match => this.matches.find(m => m.id === match.id && m.active === false)).forEach(match => {
                 player.gamePoints += ((match.bye ? this.scoring.bye : this.scoring.win) * match.win) + (this.scoring.loss * match.loss) + (this.scoring.draw * match.draw);
+                player.gameWins += match.bye ? 1 : match.win;
                 player.games += match.win + match.loss + match.draw;
                 player.matchPoints += match.bye ? this.scoring.bye : match.win > match.loss ? this.scoring.win : match.loss > match.win ? this.scoring.loss : this.scoring.draw;
+                player.matchWins += match.bye || match.win > match.loss ? 1 : 0;
                 player.matches++;
                 cumulative += player.matchPoints;
             });
@@ -964,8 +969,25 @@ export class Tournament {
             players = players.filter(p => p.player.active === true);
         }
         players.sort((a, b) => {
-            if (a.matchPoints !== b.matchPoints) {
-                return b.matchPoints - a.matchPoints;
+            switch (this.scoring.score) {
+                case 'game points':
+                    if (a.gamePoints !== b.gamePoints) {
+                        return b.gamePoints - a.gamePoints;
+                    }
+                break;
+                case 'game wins':
+                    if (a.gameWins !== b.gameWins) {
+                        return b.gameWins - a.gameWins;
+                    }
+                case 'match points':
+                    if (a.matchPoints !== b.matchPoints) {
+                        return b.matchPoints - a.matchPoints;
+                    }
+                break;
+                case 'match wins':
+                    if (a.matchWins !== b.matchWins) {
+                        return b.matchWins - a.matchWins;
+                    }
             }
             for (let i = 0; i < this.scoring.tiebreaks.length; i++) {
                 switch (this.scoring.tiebreaks[i]) {
