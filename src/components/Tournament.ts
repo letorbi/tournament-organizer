@@ -316,16 +316,16 @@ export class Tournament {
             matchPoints: 0,
             matches: 0,
             tiebreaks: {
-                medianBuchholz: 0,
-                solkoff: 0,
-                sonnebornBerger: 0,
-                cumulative: 0,
-                oppCumulative: 0,
-                matchWinPct: 0,
-                oppMatchWinPct: 0,
-                oppOppMatchWinPct: 0,
-                gameWinPct: 0,
-                oppGameWinPct: 0
+                medianBuchholz: this.scoring.tiebreakFloors.medianBuchholz || 0,
+                solkoff: this.scoring.tiebreakFloors.solkoff || 0,
+                sonnebornBerger: this.scoring.tiebreakFloors.sonnebornBerger || 0,
+                cumulative: this.scoring.tiebreakFloors.cumulative || 0,
+                oppCumulative: this.scoring.tiebreakFloors.oppCumulative || 0,
+                matchWinPct: this.scoring.tiebreakFloors.matchWinPct || 0,
+                oppMatchWinPct: this.scoring.tiebreakFloors.oppMatchWinPct || 0,
+                oppOppMatchWinPct: this.scoring.tiebreakFloors.oppOppMatchWinPct || 0,
+                gameWinPct: this.scoring.tiebreakFloors.gameWinPct || 0,
+                oppGameWinPct: this.scoring.tiebreakFloors.oppGameWinPct || 0
             }
         }));
         for (let i = 0; i < playerScores.length; i++) {
@@ -338,15 +338,17 @@ export class Tournament {
                 const matchB = this.matches.find(m => m.id === b.id);
                 return matchA.round - matchB.round;
             });
+            let cumulative = 0;
             player.player.matches.filter(match => this.matches.find(m => m.id === match.id && m.active === false)).forEach(match => {
                 player.gamePoints += ((match.bye ? this.scoring.bye : this.scoring.win) * match.win) + (this.scoring.loss * match.loss) + (this.scoring.draw * match.draw);
                 player.games += match.win + match.loss + match.draw;
                 player.matchPoints += match.bye ? this.scoring.bye : match.win > match.loss ? this.scoring.win : match.loss > match.win ? this.scoring.loss : this.scoring.draw;
-                player.tiebreaks.cumulative += player.matchPoints;
                 player.matches++;
+                cumulative += player.matchPoints;
             });
-            player.tiebreaks.gameWinPct = player.games === 0 ? 0 : player.gamePoints / (player.games * this.scoring.win);
-            player.tiebreaks.matchWinPct = player.matches === 0 ? 0 : player.matchPoints / (player.matches * this.scoring.win);
+            player.tiebreaks.cumulative = Math.max(cumulative, player.tiebreaks.cumulative);
+            player.tiebreaks.gameWinPct = Math.max(player.games === 0 ? 0 : player.gamePoints / (player.games * this.scoring.win), player.tiebreaks.gameWinPct);
+            player.tiebreaks.matchWinPct = Math.max(player.matches === 0 ? 0 : player.matchPoints / (player.matches * this.scoring.win), player.tiebreaks.matchWinPct);
         }
         for (let i = 0; i < playerScores.length; i++) {
             const player = playerScores[i];
@@ -354,25 +356,25 @@ export class Tournament {
             if (opponents.length === 0) {
                 continue;
             }
-            player.tiebreaks.oppMatchWinPct = opponents.reduce((sum, opp) => sum + opp.tiebreaks.matchWinPct, 0) / opponents.length;
-            player.tiebreaks.oppGameWinPct = opponents.reduce((sum, opp) => sum + opp.tiebreaks.gameWinPct, 0) / opponents.length;
+            player.tiebreaks.oppMatchWinPct = Math.max(opponents.reduce((sum, opp) => sum + opp.tiebreaks.matchWinPct, 0) / opponents.length, player.tiebreaks.oppMatchWinPct);
+            player.tiebreaks.oppGameWinPct = Math.max(opponents.reduce((sum, opp) => sum + opp.tiebreaks.gameWinPct, 0) / opponents.length, player.tiebreaks.oppGameWinPct);
             const oppMatchPoints = opponents.map(opp => opp.matchPoints);
-            player.tiebreaks.solkoff = oppMatchPoints.reduce((sum, curr) => sum + curr, 0);
+            player.tiebreaks.solkoff = Math.max(oppMatchPoints.reduce((sum, curr) => sum + curr, 0), player.tiebreaks.solkoff);
             if (oppMatchPoints.length > 2) {
                 const max = oppMatchPoints.reduce((max, curr) => Math.max(max, curr), 0);
                 const min = oppMatchPoints.reduce((min, curr) => Math.min(min, curr), max);
                 oppMatchPoints.splice(oppMatchPoints.indexOf(max), 1);
                 oppMatchPoints.splice(oppMatchPoints.indexOf(min), 1);
-                player.tiebreaks.medianBuchholz = oppMatchPoints.reduce((sum, curr) => sum + curr, 0);
+                player.tiebreaks.medianBuchholz = Math.max(oppMatchPoints.reduce((sum, curr) => sum + curr, 0), player.tiebreaks.medianBuchholz);
             }
-            player.tiebreaks.sonnebornBerger = opponents.reduce((sum, opp) => {
+            player.tiebreaks.sonnebornBerger = Math.max(opponents.reduce((sum, opp) => {
                 const match = player.player.matches.find(m => m.opponent === opp.player.id);
                 if (this.matches.find(m => m.id === match.id).active === true) {
                     return sum;
                 }
                 return match.win > match.loss ? sum + opp.matchPoints : sum + (0.5 * opp.matchPoints);
-            }, 0);
-            player.tiebreaks.oppCumulative = opponents.reduce((sum, opp) => sum + opp.tiebreaks.cumulative, 0);
+            }, 0), player.tiebreaks.sonnebornBerger);
+            player.tiebreaks.oppCumulative = Math.max(opponents.reduce((sum, opp) => sum + opp.tiebreaks.cumulative, 0), player.tiebreaks.oppCumulative);
         }
         for (let i = 0; i < playerScores.length; i++) {
             const player = playerScores[i];
@@ -380,15 +382,7 @@ export class Tournament {
             if (opponents.length === 0) {
                 continue;
             }
-            player.tiebreaks.oppOppMatchWinPct = opponents.reduce((sum, opp) => sum + opp.tiebreaks.oppMatchWinPct, 0) / opponents.length;
-        }
-        for (const player of playerScores) {
-            for (const tiebreakName of Object.keys(player.tiebreaks)) {
-                player.tiebreaks[tiebreakName] = Math.max(
-                    player.tiebreaks[tiebreakName],
-                    this.scoring.tiebreakFloors[tiebreakName] || 0
-                 );
-            }
+            player.tiebreaks.oppOppMatchWinPct = Math.max(opponents.reduce((sum, opp) => sum + opp.tiebreaks.oppMatchWinPct, 0) / opponents.length, player.tiebreaks.oppOppMatchWinPct);
         }
         return playerScores;
     }
